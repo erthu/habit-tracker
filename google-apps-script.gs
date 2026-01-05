@@ -111,7 +111,7 @@ function getSheetData(sheet) {
 
 function writeData(data) {
   const sheet = getOrCreateSheet();
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn() || 13).getValues()[0];
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn() || 14).getValues()[0];
   
   // If no headers exist, create them
   if (!headers[0] || headers[0] === '') {
@@ -119,6 +119,9 @@ function writeData(data) {
     sheet.getRange(1, 1, 1, defaultHeaders.length).setValues([defaultHeaders]);
     headers.splice(0, headers.length, ...defaultHeaders);
   }
+  
+  // Numeric fields that should not be auto-formatted as dates
+  const numericFields = ['Gewicht', 'Alkohol', 'Schritte', 'Schlaf', 'Stimmung', 'Bildschirmzeit', 'Arbeitszeit'];
   
   // Check if date already exists
   const dateCol = headers.indexOf('Datum') + 1;
@@ -132,26 +135,44 @@ function writeData(data) {
     }
     if (existingDate === inputDate) {
       // Update existing row
-      return updateRow(sheet, headers, data, i + 2);
+      return updateRow(sheet, headers, data, i + 2, numericFields);
     }
   }
   
-  // Add new row
+  // Add new row - use setValues with NumberFormat to prevent date conversion
   const newRow = headers.map(header => data[header] !== undefined ? data[header] : '');
-  sheet.appendRow(newRow);
+  const lastRow = sheet.getLastRow() + 1;
+  const range = sheet.getRange(lastRow, 1, 1, newRow.length);
+  range.setValues([newRow]);
+  
+  // Set numeric columns to plain text format to prevent date auto-conversion
+  headers.forEach((header, idx) => {
+    if (numericFields.includes(header)) {
+      sheet.getRange(lastRow, idx + 1).setNumberFormat('@'); // @ = plain text
+    }
+  });
   
   // Sort by date descending (newest first)
   if (sheet.getLastRow() > 2) {
-    const range = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn());
-    range.sort({ column: dateCol, ascending: false });
+    const sortRange = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn());
+    sortRange.sort({ column: dateCol, ascending: false });
   }
   
   return { success: true, message: 'Data added successfully' };
 }
 
-function updateRow(sheet, headers, data, rowIndex) {
+function updateRow(sheet, headers, data, rowIndex, numericFields) {
   const rowData = headers.map(header => data[header] !== undefined ? data[header] : '');
-  sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
+  const range = sheet.getRange(rowIndex, 1, 1, rowData.length);
+  range.setValues([rowData]);
+  
+  // Set numeric columns to plain text format
+  headers.forEach((header, idx) => {
+    if (numericFields.includes(header)) {
+      sheet.getRange(rowIndex, idx + 1).setNumberFormat('@');
+    }
+  });
+  
   return { success: true, message: 'Data updated successfully' };
 }
 
