@@ -100,7 +100,7 @@ function writeData(data) {
   
   // If no headers exist, create them
   if (!headers[0] || headers[0] === '') {
-    const defaultHeaders = ['Datum', 'Gewicht', 'NoPorn', 'Polnisch', 'Sport', 'Zaehne', 'Alkohol', 'Schritte', 'Kreatin', 'Schlaf', 'Stimmung', 'Bildschirmzeit', 'Notizen'];
+    const defaultHeaders = ['Datum', 'Gewicht', 'NoPorn', 'Polnisch', 'Sport', 'Zaehne', 'Alkohol', 'Schritte', 'Kreatin', 'Schlaf', 'Stimmung', 'Bildschirmzeit', 'Arbeitszeit', 'Notizen'];
     sheet.getRange(1, 1, 1, defaultHeaders.length).setValues([defaultHeaders]);
     headers.splice(0, headers.length, ...defaultHeaders);
   }
