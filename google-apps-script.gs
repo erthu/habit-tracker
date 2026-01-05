@@ -82,11 +82,26 @@ function getSheetData(sheet) {
     const row = {};
     for (let j = 0; j < headers.length; j++) {
       let value = data[i][j];
-      // Convert Date objects to ISO string
+      const headerName = headers[j];
+      
+      // Only convert Date objects to ISO string for the Datum column
       if (value instanceof Date) {
-        value = Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+        if (headerName === 'Datum') {
+          value = Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+        } else {
+          // For other columns, if it's a time/date by accident, extract the number
+          // Google Sheets stores times as fractions of a day (0.5 = 12:00)
+          // If it's a small number (< 1), it's likely a time that should be hours
+          const hours = value.getHours() + value.getMinutes() / 60;
+          if (hours > 0) {
+            value = hours;
+          } else {
+            // Might be a date used as a number, try to get numeric value
+            value = data[i][j];
+          }
+        }
       }
-      row[headers[j]] = value;
+      row[headerName] = value;
     }
     rows.push(row);
   }
